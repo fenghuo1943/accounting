@@ -5,6 +5,7 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from app.api import transaction, user, account,family
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -13,7 +14,13 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许所有来源
+    allow_credentials=True,
+    allow_methods=["*"],  # 允许所有方法
+    allow_headers=["*"],  # 允许所有头
+)
 # 加载路由
 app.include_router(transaction.router, prefix="/api/v1")
 app.include_router(account.router, prefix="/api/v1")

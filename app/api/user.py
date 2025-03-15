@@ -61,12 +61,6 @@ def delete_user(
     except HTTPException as e:
         raise e
     return None
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def register_user(
-    user_data: UserRegister,  # 从请求体中获取用户注册数据
-    db: Session = Depends(get_db)  # 通过依赖注入获取数据库会话
-):
-    return UserService.register_user(db, user_data)
 # 用户注册
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register_user(
