@@ -1,8 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from ..models import User
-from ..schemas import UserCreate, UserUpdate, UserRead
+from ..schemas import UserCreate, UserUpdate, UserRead, UserRegister
 import uuid
+# JWT 配置
+SECRET_KEY = "your-secret-key"  # 替换为安全的密钥
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 class UserService:
     @staticmethod
@@ -86,3 +90,29 @@ class UserService:
         db.delete(user)
         db.commit()
         return {"message": "User deleted successfully"}
+    @staticmethod
+    def register_user(db: Session, user_data: UserRegister):
+        # 检查用户名和邮箱是否已存在
+        existing_user = db.query(User).filter(
+            (User.username == user_data.username) | (User.email == user_data.email)
+        ).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username or email already exists"
+            )
+
+        # 创建用户对象
+        user = User(
+            username=user_data.username,
+            email=user_data.email
+        )
+
+        # 哈希密码并存储
+        user.set_password(user_data.password)
+
+        # 将用户添加到数据库
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user

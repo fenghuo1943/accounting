@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from ..schemas import TransactionCreate, TransactionRead, TransactionUpdate
 from ..services.transaction import TransactionService
 from ..exceptions import InsufficientBalanceError 
+from ..core.auth import  get_current_user
+from ..models.user import User
 from ..dependencies import get_db
 from uuid import UUID
 
@@ -13,7 +15,8 @@ router = APIRouter(prefix="/transaction", tags=["transaction"])
 @router.post("/", response_model=TransactionRead, status_code=status.HTTP_201_CREATED)
 def create_transaction(
     transaction_data: TransactionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # 确保用户已登录
 ):
     try:
         return TransactionService.create_transaction(db, transaction_data)

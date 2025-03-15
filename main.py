@@ -4,7 +4,7 @@
 #celery -A app.core.celery worker --loglevel=info
 from fastapi import FastAPI
 from app.core.config import settings
-from app.api import auth, transaction, user, account,family
+from app.api import transaction, user, account,family
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,7 +19,7 @@ app.include_router(transaction.router, prefix="/api/v1")
 app.include_router(account.router, prefix="/api/v1")
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(family.router, prefix="/api/v1")
-app.include_router(auth.router, prefix="/api/v1/auth")
+#app.include_router(auth.router, prefix="/api/v1/auth")
 
 @app.get("/")
 def read_root():

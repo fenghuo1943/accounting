@@ -18,4 +18,4 @@ class Account(BaseModel):
     # 关系
     user = relationship("User", back_populates="accounts")  # 多对一：账户 -> 用户
     user_id = Column(String, ForeignKey("users.id"))  # 外键：关联用户
-    transactions = relationship("Transaction", back_populates="account")  # 一对多：账户 -> 账单
+    transactions = relationship("Transaction", back_populates="from_account")  # 一对多：账户 -> 账单

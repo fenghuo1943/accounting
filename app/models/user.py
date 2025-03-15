@@ -21,6 +21,7 @@ class User(BaseModel):
 
     # 关系
     accounts = relationship("Account", back_populates="user")  # 一对多：用户 -> 账户
+    transactions = relationship("Transaction", back_populates="user")
     family_id = Column(String, ForeignKey("families.id"), nullable=True)
     family = relationship("Family", back_populates="users")
 
