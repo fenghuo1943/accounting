@@ -32,6 +32,7 @@ class UserRegister(BaseSchema):
 # 令牌响应模型
 class Token(BaseSchema):
     access_token: str
+    refresh_token: str
     token_type: str
 
 # 令牌数据模型

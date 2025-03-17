@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from ..schemas import UserCreate, UserRead, UserUpdate, UserRegister,Token,TokenData
 from ..services.user import UserService
 from ..dependencies import get_db
-from ..core.auth import create_access_token, get_current_user, oauth2_scheme
+from ..core.auth import create_access_token, get_current_user, oauth2_scheme,create_refresh_token,ACCESS_TOKEN_EXPIRE_MINUTES,REFRESH_TOKEN_EXPIRE_DAYS,SECRET_KEY,ALGORITHM
 from fastapi.security import OAuth2PasswordRequestForm
 from uuid import UUID
+from jose import JWTError, jwt
 from ..models.user import User
 from datetime import timedelta
 
@@ -84,12 +85,52 @@ def login_for_access_token(
         )
 
     # 生成访问令牌
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    # 生成刷新令牌
+    refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    refresh_token = create_refresh_token(
+        data={"sub": user.username}, expires_delta=refresh_token_expires
+    )
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+@router.post("/refresh_token", response_model=Token)
+def refresh_access_token(
+    refresh_token: str,  # 从请求体中获取刷新令牌
+    db: Session = Depends(get_db)
+):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
 
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise credentials_exception
+
+    # 生成新的访问令牌
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 # 获取当前用户信息
 @router.get("/me", response_model=UserRead)
 def get_current_user_info(
